@@ -4,11 +4,14 @@
 // by those files.
 
 var Minimatch = require("minimatch").Minimatch
-, fstream = require("fstream")
-, DirReader = fstream.DirReader
-, inherits = require("inherits")
-, path = require("path")
-, fs = require("fs")
+    , fstream = require("fstream")
+    , DirReader = fstream.DirReader
+    , inherits = require("inherits")
+    , path = require("path")
+    , os = require("os")
+    , fs = require("fs");
+
+var slash = os.platform === 'darwin' ? '/' : '\\';
 
 module.exports = IgnoreReader
 
@@ -59,8 +62,8 @@ function IgnoreReader (props) {
   this.on("_entryStat", function (entry, props) {
     var t = entry.basename
     if (!this.applyIgnores(entry.basename,
-                           entry.type === "Directory",
-                           entry)) {
+            entry.type === "Directory",
+            entry)) {
       entry.abort()
     }
   }.bind(this))
@@ -78,8 +81,8 @@ IgnoreReader.prototype.addIgnoreFiles = function () {
   this._ignoreFilesAdded = true
 
   var newIg = this.entries.filter(this.isIgnoreFile, this)
-  , count = newIg.length
-  , errState = null
+      , count = newIg.length
+      , errState = null
 
   if (!count) return
 
@@ -102,8 +105,8 @@ IgnoreReader.prototype.addIgnoreFiles = function () {
 
 IgnoreReader.prototype.isIgnoreFile = function (e) {
   return e !== "." &&
-         e !== ".." &&
-         -1 !== this.ignoreFiles.indexOf(e)
+      e !== ".." &&
+      -1 !== this.ignoreFiles.indexOf(e)
 }
 
 
@@ -157,11 +160,11 @@ IgnoreReader.prototype.addIgnoreRules = function (set, e) {
   // Note that we need to allow dot files by default, and
   // not switch the meaning of their exclusion
   var mmopt = { matchBase: true, dot: true, flipNegate: true }
-  , mm = set.map(function (s) {
-    var m = new Minimatch(s, mmopt)
-    m.ignoreFile = e
-    return m
-  })
+      , mm = set.map(function (s) {
+        var m = new Minimatch(s, mmopt)
+        m.ignoreFile = e
+        return m
+      })
 
   if (!this.ignoreRules) this.ignoreRules = []
   this.ignoreRules.push.apply(this.ignoreRules, mm)
@@ -220,7 +223,7 @@ IgnoreReader.prototype.applyIgnores = function (entry, partial, obj) {
     }
 
     // first, match against /foo/bar
-    var match = rule.match("/" + entry)
+    var match = rule.match(slash + entry)
 
     if (!match) {
       // try with the leading / trimmed off the test
@@ -231,8 +234,8 @@ IgnoreReader.prototype.applyIgnores = function (entry, partial, obj) {
     // if the entry is a directory, then it will match
     // with a trailing slash. eg: /foo/bar/ or foo/bar/
     if (!match && partial) {
-      match = rule.match("/" + entry + "/") ||
-              rule.match(entry + "/")
+      match = rule.match(slash + entry + slash) ||
+          rule.match(entry + slash)
     }
 
     // When including a file with a negated rule, it's
@@ -240,8 +243,8 @@ IgnoreReader.prototype.applyIgnores = function (entry, partial, obj) {
     // it may then match a file within it.
     // Eg, if you ignore /a, but !/a/b/c
     if (!match && rule.negate && partial) {
-      match = rule.match("/" + entry, true) ||
-              rule.match(entry, true)
+      match = rule.match(slash + entry, true) ||
+          rule.match(entry, true)
     }
 
     if (match) {
@@ -255,7 +258,7 @@ IgnoreReader.prototype.applyIgnores = function (entry, partial, obj) {
 
 IgnoreReader.prototype.sort = function (a, b) {
   var aig = this.ignoreFiles.indexOf(a) !== -1
-  , big = this.ignoreFiles.indexOf(b) !== -1
+      , big = this.ignoreFiles.indexOf(b) !== -1
 
   if (aig && !big) return -1
   if (big && !aig) return 1
@@ -268,8 +271,8 @@ IgnoreReader.prototype._sort = function (a, b) {
 
 function alphasort (a, b) {
   return a === b ? 0
-       : a.toLowerCase() > b.toLowerCase() ? 1
-       : a.toLowerCase() < b.toLowerCase() ? -1
-       : a > b ? 1
-       : -1
+      : a.toLowerCase() > b.toLowerCase() ? 1
+      : a.toLowerCase() < b.toLowerCase() ? -1
+      : a > b ? 1
+      : -1
 }
